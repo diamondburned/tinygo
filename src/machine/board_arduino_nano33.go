@@ -10,30 +10,35 @@ import "device/sam"
 
 // GPIO Pins
 const (
-	RX0 = PA11 // UART0 RX
-	TX1 = PA10 // UART0 TX
-	D2  = PA14
-	D3  = PA09 // PWM available
-	D4  = PA08
-	D5  = PA15 // PWM available
-	D6  = PA20 // PWM available
-	D7  = PA21
-	D8  = PA06
-	D9  = PA07 // PWM available
-	D10 = PA18 // PWM available
-	D11 = PA16 // PWM available
-	D12 = PA19 // PWM available
-	D13 = PA17 // PWM available
+	RX0 Pin = PB23 // UART2 RX
+	TX1 Pin = PB22 // UART2 TX
+
+	D2 Pin = PB10 // PWM available
+	D3 Pin = PB11 // PWM available
+	D4 Pin = PA07
+	D5 Pin = PA05 // PWM available
+	D6 Pin = PA04 // PWM available
+	D7 Pin = PA06
+
+	D8  Pin = PA18
+	D9  Pin = PA20 // PWM available
+	D10 Pin = PA21 // PWM available
+	D11 Pin = PA16 // PWM available
+	D12 Pin = PA19 // PWM available
+
+	D13 Pin = PA17
 )
 
 // Analog pins
 const (
-	A0 = PA02 // ADC/AIN[0]
-	A1 = PB08 // ADC/AIN[2]
-	A2 = PB09 // ADC/AIN[3]
-	A3 = PA04 // ADC/AIN[4]
-	A4 = PA05 // ADC/AIN[5]
-	A5 = PB02 // ADC/AIN[10]
+	A0 Pin = PA02 // ADC/AIN[0]
+	A1 Pin = PB02 // ADC/AIN[10]
+	A2 Pin = PA11 // ADC/AIN[19]
+	A3 Pin = PA10 // ADC/AIN[18]
+	A4 Pin = PB08 // ADC/AIN[2], SCL:  SERCOM2/PAD[1]
+	A5 Pin = PB09 // ADC/AIN[3], SDA:  SERCOM2/PAD[1]
+	A6 Pin = PA09 // ADC/AIN[17]
+	A7 Pin = PB03 // ADC/AIN[11]
 )
 
 const (
@@ -43,19 +48,19 @@ const (
 // NINA-W102 Pins
 
 const (
-	NINA_MOSI   = PA12
-	NINA_MISO   = PA13
-	NINA_CS     = PA14
-	NINA_SCK    = PA15
-	NINA_GPIO0  = PA27
-	NINA_RESETN = PA08
-	NINA_ACK    = PA28
+	NINA_MOSI   Pin = PA12
+	NINA_MISO   Pin = PA13
+	NINA_CS     Pin = PA14
+	NINA_SCK    Pin = PA15
+	NINA_GPIO0  Pin = PA27
+	NINA_RESETN Pin = PA08
+	NINA_ACK    Pin = PA28
 )
 
 // UART0 aka USBCDC pins
 const (
-	USBCDC_DM_PIN = PA24
-	USBCDC_DP_PIN = PA25
+	USBCDC_DM_PIN Pin = PA24
+	USBCDC_DP_PIN Pin = PA25
 )
 
 // UART1 on the Arduino Nano 33 connects to the onboard NINA-W102 WiFi chip.
@@ -69,8 +74,8 @@ var (
 
 // UART1 pins
 const (
-	UART_TX_PIN = PA22
-	UART_RX_PIN = PA23
+	UART_TX_PIN Pin = PA22
+	UART_RX_PIN Pin = PA23
 )
 
 //go:export SERCOM5_IRQHandler
@@ -78,10 +83,26 @@ func handleUART1() {
 	defaultUART1Handler()
 }
 
+// UART2 on the Arduino Nano 33 connects to the normal TX/RX pins.
+var (
+	UART2 = UART{Bus: sam.SERCOM3_USART,
+		Buffer: NewRingBuffer(),
+		Mode:   PinSERCOMAlt,
+		IRQVal: sam.IRQ_SERCOM3,
+	}
+)
+
+//go:export SERCOM3_IRQHandler
+func handleUART2() {
+	// should reset IRQ
+	UART2.Receive(byte((UART2.Bus.DATA.Get() & 0xFF)))
+	UART2.Bus.INTFLAG.SetBits(sam.SERCOM_USART_INTFLAG_RXC)
+}
+
 // I2C pins
 const (
-	SDA_PIN = PB08 // SDA: SERCOM4/PAD[0]
-	SCL_PIN = PB09 // SCL: SERCOM4/PAD[1]
+	SDA_PIN Pin = A4 // SDA: SERCOM4/PAD[1]
+	SCL_PIN Pin = A5 // SCL: SERCOM4/PAD[1]
 )
 
 // I2C on the Arduino Nano 33.
@@ -94,9 +115,9 @@ var (
 
 // SPI pins
 const (
-	SPI0_SCK_PIN  = PB11 // SCK: SERCOM4/PAD[3]
-	SPI0_MOSI_PIN = PB10 // MOSI: SERCOM4/PAD[2]
-	SPI0_MISO_PIN = PA12 // MISO: SERCOM4/PAD[0]
+	SPI0_SCK_PIN  Pin = PB11 // SCK: SERCOM4/PAD[3]
+	SPI0_MOSI_PIN Pin = PB10 // MOSI: SERCOM4/PAD[2]
+	SPI0_MISO_PIN Pin = PA12 // MISO: SERCOM4/PAD[0]
 )
 
 // SPI on the Arduino Nano 33.
@@ -106,9 +127,9 @@ var (
 
 // I2S pins
 const (
-	I2S_SCK_PIN = PA10
-	I2S_SD_PIN  = PA08
-	I2S_WS_PIN  = NoPin // TODO: figure out what this is on Arduino Nano 33.
+	I2S_SCK_PIN Pin = PA10
+	I2S_SD_PIN  Pin = PA08
+	I2S_WS_PIN      = NoPin // TODO: figure out what this is on Arduino Nano 33.
 )
 
 // I2S on the Arduino Nano 33.
